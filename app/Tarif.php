@@ -12,9 +12,10 @@ class Tarif extends Model
       DB::table('users')->where('id', '=', $user_id)->update([
           'tarif_id' => $tarif_id
       ]); // или твой elequent
-      self::countPV(1, $tarif_id); // начисляем бабки за покупку тарифа здесь укажи id счета
+      return self::countPV(1, $tarif_id); // начисляем бабки за покупку тарифа здесь укажи id счета
 
   }
+
   public static function getAll()
   {
       return DB::table('tarifs')->get();
@@ -27,7 +28,7 @@ class Tarif extends Model
   {
       $pv_count = DB::table('tarifs')->where('id', '=', $tarif_id)
       ->get()[0]->pv;
-      Invoice::replenish($invoice_id, $pv_count);
+      return Invoice::replenish($invoice_id, $pv_count);
   }
 
 

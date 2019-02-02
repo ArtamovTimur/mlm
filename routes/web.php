@@ -40,13 +40,20 @@ Route::get('/', function () {
     //return response(\App\BinaryTree::getUserChildsTop(1), 200);
 
 
-     \App\BinaryTree::addSponsor(2, 1);
+     //\App\BinaryTree::addSponsor(2, 1);
      //\App\BinaryTree::addSponsor(3, 1);
 
    //return response(\App\BinaryTree::getTree(1), 200);
-    return response(\App\BinaryTree::getTree(1));
+    //return response(\App\BinaryTree::getTree(1));
 
 
+
+
+
+    //\App\PV::createPVInvoice(1); // создание счета для pv
+    //var_dump(\App\PV::getPV(1)); // получение по id пользователя
+    //\App\PV::replenishPV(1, 300); // увеличение pv(наример при покуаке в магазе)
+   // \App\PV::spendTarif(1, 2); // покупка тарифа по неактивиронному pv
 
 
 });

@@ -13,38 +13,19 @@ class BinaryTree extends Model
      * */
     public static function addSponsor($user_id, $sponsor_id)
     {
-        $lever = self::getLever($sponsor_id);
-        $last_child = self::getLastChild($sponsor_id);
-        if(self::getLever($last_child) != $lever){
-
-            $parent = DB::table('binary_trees')
-                ->where('leg', '=', $lever)
-                ->where('sponsor_id', '=', $sponsor_id)
-                ->get()->first()->user_id;
-            if(empty($parent)){
-                $parent = $sponsor_id;
-            }
-
+        try {
+            $lever = self::getLever($sponsor_id);
+            $last_child = self::getLastChildByLever($sponsor_id, $lever);
+     
             return DB::table('binary_trees')
-                ->insert([
-                    'hash' => str_random(6),
-                    'parent_id' => $parent,
-                    'user_id' => $user_id,
-                    'sponsor_id' => $sponsor_id,
-                    'leg' => self::getLever($sponsor_id)
-                ]);
-        }else {
-
-            return DB::table('binary_trees')
-                ->insert([
-                    'hash' => str_random(6),
-                    'parent_id' => self::getLastChild($sponsor_id),
-                    'user_id' => $user_id,
-                    'sponsor_id' => $sponsor_id,
-                    'leg' => self::getLever($sponsor_id)
-                ]);
-        }
-
+            ->insert([
+                'hash' => str_random(6),
+                'parent_id' => $last_child->user_id,
+                'user_id' => $user_id,
+                'sponsor_id' => $sponsor_id,
+                'leg' => $lever
+            ]);
+        } catch (\Exception $e) {}
     }
 
     public static function getLeverCount($user_id)
@@ -62,13 +43,13 @@ class BinaryTree extends Model
 
     public static function getLever($user_id)
     {
-        try{
-//            return DB::table('users')
-//                ->where('id', '=', $user_id)
-//                ->get()->first()->lever;
-            return 'right';
+        try {
+           return DB::table('users')
+               ->where('id', '=', $user_id)
+               ->get()->first()->lever;
+            // return 'right';
 
-        }catch (\Exception $e){
+        } catch (\Exception $e){
 
         }
 
@@ -79,6 +60,25 @@ class BinaryTree extends Model
     		->where('sponsor_id', '=', $user_id)->limit(8)->get();
     	
     }
+
+    public static function getLastChildByLever($id, $lever, $lastChild = null) {
+        try {
+            if (!$lastChild) {
+                $lastChild = DB::table('binary_trees')
+                ->where('user_id', '=', $id)->get()->first();
+            }
+
+            $currentLastChild = DB::table('binary_trees')
+                ->where('parent_id', '=', $id)
+                ->where('leg', '=', $lever)->get()->first();
+            if (empty($currentLastChild)) return $lastChild;
+
+            return self::getLastChildByLever($currentLastChild->user_id, $lever, $currentLastChild);
+        }catch (\Exception $e){
+
+        }
+    }
+
     public static function getLastChild($sponsor_id)
     {
         try{
@@ -108,67 +108,28 @@ class BinaryTree extends Model
     public static function getTree($user_id)
     {
         $res = [];
-        if(!empty($c1 = DB::table('binary_trees')
-            ->where('sponsor_id', '=', $user_id)
-            ->where('leg', '=', 'left')->get()->first())){
-            $res[] = $c1;
-        }
-        if(!empty($c2 = DB::table('binary_trees')
-            ->where('sponsor_id', '=', $user_id)
-            ->where('leg', '=', 'right')->get()->first())){
-            $res[] = $c2;
-        }
-        if(!empty($c1)){
-            $res[] = $c3 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c1->user_id)
-                ->where('leg', '=', 'right')->get()->first();
 
-            $res[] = $c4 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c1->user_id)
-                ->where('leg', '=', 'right')->get()->first();
+        function getUser($res, $id, $level = 0) {
+            if ($level > 3) return $res;
+            $level++;
+            if(!empty($c1 = DB::table('binary_trees')
+                ->where('parent_id', '=', $id)
+                ->where('leg', '=', 'left')->get()->first())) {
+                $res[] = $c1;
+                $res = getUser($res, $c1->user_id, $level);
+            }
+            if(!empty($c2 = DB::table('binary_trees')
+                ->where('parent_id', '=', $id)
+                ->where('leg', '=', 'right')->get()->first())) {
+                $res[] = $c2;
+                $res = getUser($res, $c2->user_id, $level);
+            }
+            return $res;
         }
-        if(!empty($c2)){
-            $res[] = $c5 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c2->user_id)
-                ->where('leg', '=', 'left')->get()->first();
-            $res[] = $c6 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c2->user_id)
-                ->where('leg', '=', 'right')->get()->first();
-        }
-        if(!empty($c3)){
-            $res[] = $c7 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c3->user_id)
-                ->where('leg', '=', 'left')->get()->first();
-            $res[] = $c8 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c3->user_id)
-                ->where('leg', '=', 'right')->get()->first();
-        }
-        if(!empty($c4)){
-            $res[] = $c9 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c4->user_id)
-                ->where('leg', '=', 'left')->get()->first();
-            $res[] = $c10 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c4->user_id)
-                ->where('leg', '=', 'right')->get()->first();
-        }
-        if(!empty($c5)){
-            $res[] = $c11 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c5->user_id)
-                ->where('leg', '=', 'left')->get()->first();
-            $res[] = $c12 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c5->user_id)
-                ->where('leg', '=', 'right')->get()->first();
-        }
-        if(!empty($c6)){
-            $res[] = $c13 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c6->user_id)
-                ->where('leg', '=', 'left')->get()->first();
-            $res[] = $c14 = DB::table('binary_trees')
-                ->where('parent_id', '=', $c6->user_id)
-                ->where('leg', '=', 'right')->get()->first();
-        }
+
+        $res = getUser($res, $user_id);
+
         return $res;
-
     }
 
 }
